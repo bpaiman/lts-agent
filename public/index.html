@@ -197,4 +197,115 @@ Formatiere Tabellen wenn sinnvoll mit | Spalte | Format.`;
         )}
         {sidebarOpen && uploadedFiles.length > 0 && (
           <div style={{ padding:"8px 10px", borderTop:`1px solid ${p.border}`, maxHeight:120, overflowY:"auto" }}>
-            <div style={{ fontSize:10, color:p.textDim, marginBottom:6, textTransform:"uppercase", letterSpacing:1 }}>Dateien</di
+            <div style={{ fontSize:10, color:p.textDim, marginBottom:6, textTransform:"uppercase", letterSpacing:1 }}>Dateien</div>
+            {uploadedFiles.map((f,i) => (
+              <div key={i} style={{ fontSize:10, color:p.textMuted, padding:"3px 0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>▦ {f.name}</div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0 }}>
+        <div style={{ padding:"12px 20px", borderBottom:`1px solid ${p.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", background:p.surface, flexShrink:0 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+            <span style={{ fontSize:18 }}>{MODULES.find(m=>m.id===activeModule)?.icon}</span>
+            <div>
+              <div style={{ fontWeight:600, fontSize:14 }}>{MODULES.find(m=>m.id===activeModule)?.label}</div>
+              <div style={{ fontSize:10, color:p.textDim }}>{activeLocation==="ALL"?"Alle Standorte":`Standort: ${activeLocation}`} · {uploadedFiles.length} Datei(en)</div>
+            </div>
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <div style={{ width:8, height:8, borderRadius:"50%", background:loading?p.warning:p.success, animation:loading?"pulse 1s infinite":"none" }}/>
+            <span style={{ fontSize:10, color:p.textMuted }}>{loading?"Verarbeite...":"Bereit"}</span>
+          </div>
+        </div>
+
+        <div style={{ flex:1, display:"flex", overflow:"hidden" }}>
+          <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0 }}>
+            <div style={{ padding:"10px 20px", borderBottom:`1px solid ${p.border}`, display:"flex", gap:6, flexWrap:"wrap", background:p.surface, flexShrink:0 }}>
+              {(quickActions[activeModule]||[]).map((qa,i) => (
+                <button key={i} onClick={()=>sendMessage(qa.prompt)} disabled={loading} style={{ padding:"5px 12px", borderRadius:4, border:`1px solid ${p.borderLight}`, background:p.surfaceAlt, color:p.textMuted, fontSize:11, cursor:loading?"not-allowed":"pointer", opacity:loading?0.5:1, fontFamily:"inherit", whiteSpace:"nowrap" }}>
+                  {qa.label}
+                </button>
+              ))}
+              <button onClick={()=>fileRef.current?.click()} disabled={loading} style={{ padding:"5px 12px", borderRadius:4, border:`1px dashed ${p.borderLight}`, background:"transparent", color:p.accent, fontSize:11, cursor:loading?"not-allowed":"pointer", fontFamily:"inherit", opacity:loading?0.5:1 }}>
+                + Datei hochladen
+              </button>
+              <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.pdf,.txt,.json" onChange={handleFileUpload} style={{ display:"none" }}/>
+            </div>
+
+            <div ref={chatRef} style={{ flex:1, overflowY:"auto", padding:"16px 20px", display:"flex", flexDirection:"column", gap:12 }}>
+              {messages.length === 0 && (
+                <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16, height:"100%" }}>
+                  <div style={{ fontSize:56, opacity:0.1 }}>◎</div>
+                  <div style={{ textAlign:"center" }}>
+                    <div style={{ fontSize:15, fontWeight:600, color:p.textMuted, marginBottom:8 }}>LTS Logistik-Agent bereit</div>
+                    <div style={{ fontSize:11, color:p.textDim, maxWidth:380, lineHeight:1.7 }}>
+                      Lade eine Datei hoch (Excel, CSV, PDF) oder nutze die Schnellaktionen oben.<br/>
+                      Der Agent analysiert Dienstpläne, Fahrzeugdaten, KPIs und beliebige Dateien.
+                    </div>
+                  </div>
+                </div>
+              )}
+              {messages.map((msg,i) => (
+                <div key={i} style={{ display:"flex", justifyContent:msg.role==="user"?"flex-end":"flex-start" }}>
+                  <div style={{ maxWidth:"85%", padding:"10px 14px", borderRadius:msg.role==="user"?"12px 12px 2px 12px":"12px 12px 12px 2px", background:msg.role==="user"?p.accentDim:p.surfaceAlt, border:`1px solid ${msg.role==="user"?p.accent+"40":p.border}`, fontSize:12, lineHeight:1.7, whiteSpace:"pre-wrap", wordBreak:"break-word" }}>
+                    {msg.text}
+                    <div style={{ fontSize:9, color:p.textDim, marginTop:6, textAlign:"right" }}>
+                      {new Date(msg.ts).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {loading && (
+                <div style={{ display:"flex", gap:6, padding:"10px 14px" }}>
+                  {[0,1,2].map(d => <div key={d} style={{ width:6, height:6, borderRadius:"50%", background:p.accent, opacity:0.6, animation:`bounce 1s ${d*0.15}s infinite` }}/>)}
+                </div>
+              )}
+            </div>
+
+            <div style={{ padding:"12px 20px", borderTop:`1px solid ${p.border}`, background:p.surface, flexShrink:0 }}>
+              <div style={{ display:"flex", gap:8, alignItems:"flex-end" }}>
+                <textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendMessage(input); }}} placeholder="Aufgabe eingeben... (Enter zum Senden)" disabled={loading} rows={1}
+                  style={{ flex:1, padding:"10px 14px", borderRadius:8, border:`1px solid ${p.borderLight}`, background:p.surfaceAlt, color:p.text, fontSize:12, fontFamily:"inherit", resize:"none", outline:"none", lineHeight:1.5, minHeight:42, maxHeight:120 }}/>
+                <button onClick={()=>sendMessage(input)} disabled={loading||!input.trim()}
+                  style={{ padding:"10px 18px", borderRadius:8, border:"none", background:loading||!input.trim()?p.textDim:p.accent, color:"#fff", fontSize:12, fontWeight:600, cursor:loading||!input.trim()?"not-allowed":"pointer", fontFamily:"inherit", flexShrink:0, height:42 }}>
+                  Senden
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ width:240, borderLeft:`1px solid ${p.border}`, background:p.surface, display:"flex", flexDirection:"column", flexShrink:0 }}>
+            <div style={{ padding:"12px 14px", borderBottom:`1px solid ${p.border}`, fontSize:11, fontWeight:600, color:p.textMuted, display:"flex", alignItems:"center", gap:6 }}>
+              <span style={{ color:p.success }}>●</span> Agent-Protokoll
+            </div>
+            <div style={{ flex:1, overflowY:"auto", padding:"8px 10px" }}>
+              {agentLog.map((log,i) => (
+                <div key={i} style={{ padding:"4px 0", borderBottom:`1px solid ${p.border}20`, fontSize:10, lineHeight:1.5 }}>
+                  <span style={{ color:p.textDim }}>{log.time}</span>{" "}
+                  <span style={{ color:p.textMuted }}>{log.text}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding:"10px 14px", borderTop:`1px solid ${p.border}` }}>
+              <div style={{ fontSize:10, color:p.textDim, textTransform:"uppercase", letterSpacing:1, marginBottom:8 }}>Session</div>
+              {[{l:"Nachrichten",v:messages.length},{l:"Dateien",v:uploadedFiles.length},{l:"Aktionen",v:agentLog.length}].map((s,i)=>(
+                <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"3px 0", fontSize:10 }}>
+                  <span style={{ color:p.textDim }}>{s.l}</span>
+                  <span style={{ color:p.accent, fontWeight:600 }}>{s.v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<AgentApp />);
+</script>
+</body>
+</html>
